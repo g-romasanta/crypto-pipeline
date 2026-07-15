@@ -1,0 +1,67 @@
+# GITHUB ACTIONS WORKFLOW
+# ========================
+# JARGON: GitHub Actions is GitHub's built-in automation feature. A
+# "workflow" is a YAML file (YAML = a human-readable text format for
+# configuration, similar in spirit to JSON but easier to read) that tells
+# GitHub: "run these commands, on this trigger, on a temporary virtual
+# machine you provide for free."
+#
+# This is our ORCHESTRATOR for this project — instead of paying for or
+# configuring Cloud Scheduler + Cloud Functions on GCP, we use GitHub's
+# free scheduled-runner feature, which is zero-cost for public repos (and
+# has a generous free minutes allowance for private repos too).
+
+name: Daily Crypto Pipeline
+
+on:
+  schedule:
+    # CRON SYNTAX: five fields = minute, hour, day-of-month, month,
+    # day-of-week. "0 6 * * *" means "run at minute 0 of hour 6, every day,
+    # every month, every day of week" — i.e. 6:00 AM UTC daily.
+    # Note: GitHub Actions cron times are ALWAYS in UTC, not your local time.
+    - cron: "0 6 * * *"
+  # workflow_dispatch lets you also trigger this manually from the GitHub
+  # UI (a "Run workflow" button) — very useful for testing without waiting
+  # for the schedule.
+  workflow_dispatch:
+
+jobs:
+  run-pipeline:
+    # runs-on specifies the OS of the temporary virtual machine GitHub
+    # spins up just for this job, then destroys afterward.
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Check out repository code
+        uses: actions/checkout@v4
+        # "uses" pulls in a pre-built, reusable workflow step shared by the
+        # community — this one just copies your repo's files onto the
+        # runner so the later steps have access to your scripts.
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Write GCP service account key to file
+        # SECRETS are encrypted values stored in your GitHub repo settings
+        # (Settings > Secrets and variables > Actions), never visible in
+        # logs or to other people. We store our service account's JSON key
+        # as a secret, then write it to a temporary file here so the
+        # BigQuery Python client can read it.
+        run: echo '${{ secrets.GCP_SERVICE_ACCOUNT_KEY }}' > /tmp/gcp-key.json
+
+      - name: Run ETL pipeline
+        env:
+          # GOOGLE_APPLICATION_CREDENTIALS is a standard environment
+          # variable name that Google's client libraries automatically
+          # look for — you don't have to tell the code where it is
+          # manually, just set this variable and the library finds it.
+          GOOGLE_APPLICATION_CREDENTIALS: /tmp/gcp-key.json
+          GCP_PROJECT_ID: ${{ secrets.GCP_PROJECT_ID }}
+          BQ_DATASET_ID: crypto_pipeline
+          BQ_TABLE_ID: daily_prices
+        run: python scripts/main.py
