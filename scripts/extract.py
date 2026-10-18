@@ -21,6 +21,8 @@ piece of code has one clear responsibility, which makes pipelines easier to
 debug and test.
 """
 
+import os
+import time
 import requests  # third-party library for making HTTP requests
 from datetime import datetime, timezone
 
@@ -60,15 +62,31 @@ def extract_raw_prices() -> dict:
         "include_last_updated_at": "true",
     }
 
-    # timeout=10 means: if the server doesn't respond in 10 seconds, give up
-    # and raise an error instead of hanging forever. Always set a timeout on
-    # network calls — it's a common production best practice.
-    response = requests.get(API_URL, params=params, timeout=10)
+    # Optional: CoinGecko's free "Demo" API key (set as the GitHub secret
+    # COINGECKO_API_KEY). Not required, but GitHub-hosted runners share IP
+    # addresses with many other users, so the keyless endpoint can
+    # occasionally rate-limit (HTTP 429). A key avoids that.
+    headers = {}
+    api_key = os.environ.get("COINGECKO_API_KEY")
+    if api_key:
+        headers["x-cg-demo-api-key"] = api_key
 
-    # raise_for_status() throws an exception if the API returned an error
-    # code (like 404 Not Found or 500 Server Error), instead of silently
-    # continuing with bad/missing data.
-    response.raise_for_status()
+    # RETRY WITH BACKOFF: on "too many requests" (429) or a temporary server
+    # error (5xx), wait and try again instead of failing the whole daily run
+    # on a one-off hiccup. timeout=15 means we never hang forever.
+    last_error = None
+    for attempt in range(1, 5):
+        response = requests.get(API_URL, params=params, headers=headers, timeout=15)
+        if response.status_code == 429 or response.status_code >= 500:
+            last_error = f"HTTP {response.status_code}"
+            time.sleep(10 * attempt)
+            continue
+        # raise_for_status() throws on other error codes (404 etc.) instead
+        # of silently continuing with bad/missing data.
+        response.raise_for_status()
+        break
+    else:
+        raise RuntimeError(f"CoinGecko API failed after 4 attempts ({last_error})")
 
     raw_data = response.json()
 

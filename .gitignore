@@ -44,3 +44,6 @@ Thumbs.db
 # LOGS
 # ============================================================
 *.log
+
+# Allow the committed dataset (the *.json rule above is for secrets only)
+!data/*.csv
