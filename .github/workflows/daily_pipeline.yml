@@ -8,7 +8,7 @@ on:
   schedule:
     # 6:00 AM UTC daily (cron times on GitHub are always UTC). Scheduled
     # runs can start a few minutes late when GitHub is busy.
-    - cron: "0 6 * * *"
+    - cron: "17 6 * * *"
   workflow_dispatch:   # "Run workflow" button for manual testing
 
 # The built-in GITHUB_TOKEN needs write access so the job can commit data.
