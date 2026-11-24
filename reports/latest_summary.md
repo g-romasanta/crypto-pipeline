@@ -2,11 +2,11 @@
 
 | coin | price (USD) | 24h change (%) | extracted (UTC) |
 |---|---|---|---|
-| bitcoin | 61,434.00 | +1.21 | 2026-11-23T18:18:48Z |
-| ethereum | 1,740.40 | +1.57 | 2026-11-23T18:18:48Z |
-| solana | 73.37 | +4.30 | 2026-11-23T18:18:48Z |
+| bitcoin | 59,949.00 | -2.63 | 2026-11-24T17:52:11Z |
+| ethereum | 1,681.51 | -3.34 | 2026-11-24T17:52:11Z |
+| solana | 69.47 | -5.48 | 2026-11-24T17:52:11Z |
 
-Rows in history: 381
+Rows in history: 384
 Duplicate coin/day loads: 0
 Days with no data: 7
 Missing dates (UTC): 2026-09-11, 2026-10-12, 2026-10-13, 2026-10-14, 2026-10-15, 2026-10-16, 2026-10-17
