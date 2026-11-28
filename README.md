@@ -6,7 +6,7 @@ An end-to-end ETL pipeline that extracts cryptocurrency prices, transforms them,
 
 ## What it does
 
-Every day at 6:00 AM UTC, a GitHub Actions workflow:
+Every day at about 6:17 AM UTC, a GitHub Actions workflow:
 
 1. **Extracts** current prices for Bitcoin, Ethereum, and Solana from the CoinGecko API (with retry/backoff on rate limits)
 2. **Transforms** the data with pandas: flattening, typing, and validating it into a tidy schema
@@ -17,7 +17,7 @@ Every day at 6:00 AM UTC, a GitHub Actions workflow:
 ## Architecture
 
 ```
-GitHub Actions (cron, daily 6:00 AM UTC)
+GitHub Actions (cron, daily ~6:17 AM UTC)
         │
         ▼
 CoinGecko API → extract → transform → load → data/daily_prices.csv
